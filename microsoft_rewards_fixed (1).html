@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Microsoft Rewards - Automação de Buscas</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: clamp(1.5em, 4vw, 2.5em);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .section h2 {
+            color: #ffd700;
+            margin-bottom: 15px;
+            font-size: clamp(1.2em, 3vw, 1.5em);
+        }
+        
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        
+        .controls label {
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        
+        input[type="number"] {
+            width: 70px;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        
+        .start-btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+        }
+        
+        .start-btn:hover:not(.disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+        
+        .stop-btn {
+            background: linear-gradient(45deg, #f44336, #da190b);
+            color: white;
+        }
+        
+        .stop-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.4);
+        }
+        
+        .open-btn {
+            background: linear-gradient(45deg, #2196F3, #1976D2);
+            color: white;
+        }
+        
+        .open-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.4);
+        }
+        
+        .status {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            font-weight: bold;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            word-break: break-word;
+        }
+        
+        .progress {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+        
+        .warning {
+            background: rgba(255, 152, 0, 0.2);
+            border: 1px solid rgba(255, 152, 0, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .disabled {
+            opacity: 0.5;
+            cursor: not-allowed !important;
+        }
+        
+        .search-info {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        .current-search {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        
+        .mobile-instructions {
+            background: rgba(255, 87, 34, 0.2);
+            border: 1px solid rgba(255, 87, 34, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 8px;
+                font-size: 16px;
+            }
+            
+            .container {
+                padding: 16px;
+                border-radius: 12px;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+                margin-bottom: 20px;
+            }
+            
+            .section {
+                padding: 16px;
+                margin-bottom: 20px;
+            }
+            
+            .section h2 {
+                font-size: 1.3em;
+                margin-bottom: 12px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 12px;
+                align-items: stretch;
+            }
+            
+            .controls label {
+                font-size: 16px;
+                text-align: center;
+                margin-bottom: 8px;
+                display: block;
+            }
+            
+            input[type="number"] {
+                width: 100%;
+                max-width: 120px;
+                margin: 0 auto;
+                font-size: 18px;
+                padding: 12px;
+                min-height: 48px;
+                text-align: center;
+                display: block;
+            }
+            
+            button {
+                width: 100%;
+                padding: 14px 20px;
+                font-size: 18px;
+                min-height: 52px;
+                margin: 4px 0;
+                border-radius: 10px;
+            }
+            
+            .status {
+                font-size: 15px;
+                padding: 12px;
+                min-height: 60px;
+            }
+            
+            .search-info {
+                font-size: 15px;
+                padding: 12px;
+            }
+            
+            .warning, .mobile-instructions {
+                font-size: 15px;
+                padding: 12px;
+                line-height: 1.5;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 4px;
+            }
+            
+            .container {
+                padding: 12px;
+            }
+            
+            h1 {
+                font-size: 1.6em;
+            }
+            
+            .section {
+                padding: 12px;
+            }
+            
+            button {
+                font-size: 17px;
+                min-height: 50px;
+                padding: 12px 16px;
+            }
+            
+            input[type="number"] {
+                font-size: 17px;
+                min-height: 46px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Microsoft Rewards Automator</h1>
+        
+        <div class="section">
+            <h2>🖥️ Buscas Desktop (35 buscas)</h2>
+            <div class="controls">
+                <div style="text-align: center; width: 100%;">
+                    <label>Intervalo (segundos):</label>
+                    <input type="number" id="desktopInterval" value="4" min="2" max="60">
+                </div>
+                <button class="start-btn" id="startDesktop">🚀 Iniciar Desktop</button>
+                <button class="stop-btn" id="stopDesktop" style="display: none;">⏹️ Parar Desktop</button>
+                <button class="open-btn" id="openDesktop">🔗 Abrir Bing Desktop</button>
+            </div>
+            
+            <div class="search-info" id="desktopSearchInfo" style="display: none;">
+                <div>Termo atual: <span class="current-search" id="currentDesktopTerm">-</span></div>
+                <div>Progresso: <span id="desktopCounter">0</span>/35 buscas</div>
+            </div>
+            
+            <div class="status" id="desktopStatus">Pronto para iniciar buscas desktop</div>
+            <div class="progress">
+                <div class="progress-bar" id="desktopProgress"></div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📱 Buscas Mobile (30 buscas)</h2>
+            <div class="controls">
+                <div style="text-align: center; width: 100%;">
+                    <label>Intervalo (segundos):</label>
+                    <input type="number" id="mobileInterval" value="4" min="2" max="60">
+                </div>
+                <button class="start-btn" id="startMobile">🚀 Iniciar Mobile</button>
+                <button class="stop-btn" id="stopMobile" style="display: none;">⏹️ Parar Mobile</button>
+                <button class="open-btn" id="openMobile">🔗 Abrir Bing Mobile</button>
+            </div>
+            
+            <div class="search-info" id="mobileSearchInfo" style="display: none;">
+                <div>Termo atual: <span class="current-search" id="currentMobileTerm">-</span></div>
+                <div>Progresso: <span id="mobileCounter">0</span>/30 buscas</div>
+            </div>
+            
+            <div class="status" id="mobileStatus">Pronto para iniciar buscas mobile</div>
+            <div class="progress">
+                <div class="progress-bar" id="mobileProgress"></div>
+            </div>
+            
+            <div class="mobile-instructions">
+                <strong>📱 Para Mobile:</strong><br>
+                1. Clique em "Abrir Bing Mobile" primeiro<br>
+                2. Mude para User-Agent mobile no navegador<br>
+                3. Depois clique em "Iniciar Mobile"
+            </div>
+        </div>
+        
+        <div class="warning">
+            <strong>⚠️ Instruções importantes:</strong><br>
+            • <strong>Desktop:</strong> Funciona diretamente, sem configuração extra<br>
+            • <strong>Mobile:</strong> Use extensão User-Agent Switcher para simular celular<br>
+            • Use intervalos de pelo menos 3-4 segundos para parecer natural<br>
+            • Mantenha a aba ativa durante o processo<br>
+            • As buscas abrem em nova aba automaticamente
+        </div>
+    </div>
+
+    <script>
+        // Termos de busca variados e únicos
+        const desktopSearchTerms = [
+            'notícias brasil hoje', 'previsão tempo', 'receitas fáceis rápidas', 'filmes cinema 2024', 'música streaming',
+            'tecnologia inovação', 'exercícios saúde', 'destinos viagem', 'carros elétricos brasil', 'jogos pc',
+            'séries netflix amazon', 'economia brasileira', 'futebol campeonato', 'tv programação', 'livros bestseller',
+            'plantas jardim casa', 'animais domésticos', 'curiosidades ciência', 'história do brasil', 'pesquisa científica',
+            'arte moderna', 'moda 2024', 'culinária mundial', 'esportes olímpicos', 'sustentabilidade meio ambiente',
+            'educação à distância', 'trabalho home office', 'investimentos bolsa', 'psicologia saúde mental', 'energia solar',
+            'astronomia descobertas', 'medicina preventiva', 'arquitetura sustentável', 'literatura brasileira', 'cinema nacional',
+            'podcast brasileiro', 'startup tecnologia', 'criptomoedas bitcoin', 'inteligência artificial', 'robótica futuro'
+        ];
+
+        const mobileSearchTerms = [
+            'apps android ios', 'jogos celular', 'câmera smartphone', 'instagram stories', 'whatsapp status',
+            'youtube shorts', 'spotify premium', 'ifood delivery', 'uber 99', 'nubank picpay',
+            'mercado livre', 'facebook marketplace', 'fitness treino', 'receitas fit', 'memes virais',
+            'tiktok trends', 'podcast mobile', 'netflix mobile', 'filme streaming', 'notícias app',
+            'weather clima', 'trânsito waze', 'restaurante delivery', 'farmácia online', 'cinema ingressos',
+            'cupom desconto', 'cashback app', 'pix transfer', 'banco digital', 'compras online mobile'
+        ];
+
+        let desktopInterval, mobileInterval;
+        let desktopRunning = false, mobileRunning = false;
+        let desktopCount = 0, mobileCount = 0;
+        let desktopWindow = null, mobileWindow = null;
+
+        // Função para embaralhar array
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // Função para realizar busca em nova aba
+        function performSearch(term, isDesktop = true) {
+            const baseUrl = 'https://www.bing.com/search?q=';
+            const searchUrl = baseUrl + encodeURIComponent(term);
+            
+            if (isDesktop) {
+                // Para desktop, sempre abre nova aba
+                if (desktopWindow && !desktopWindow.closed) {
+                    desktopWindow.location.href = searchUrl;
+                } else {
+                    desktopWindow = window.open(searchUrl, 'desktopSearch', 'width=1200,height=800');
+                }
+                
+                document.getElementById('currentDesktopTerm').textContent = term;
+                document.getElementById('desktopCounter').textContent = desktopCount + 1;
+                document.getElementById('desktopSearchInfo').style.display = 'block';
+            } else {
+                // Para mobile, também abre nova aba
+                if (mobileWindow && !mobileWindow.closed) {
+                    mobileWindow.location.href = searchUrl;
+                } else {
+                    mobileWindow = window.open(searchUrl, 'mobileSearch', 'width=375,height=667');
+                }
+                
+                document.getElementById('currentMobileTerm').textContent = term;
+                document.getElementById('mobileCounter').textContent = mobileCount + 1;
+                document.getElementById('mobileSearchInfo').style.display = 'block';
+            }
+        }
+
+        // Função para abrir Bing diretamente
+        function openBing(isDesktop = true) {
+            const url = 'https://www.bing.com';
+            if (isDesktop) {
+                desktopWindow = window.open(url, 'desktopSearch', 'width=1200,height=800');
+            } else {
+                mobileWindow = window.open(url, 'mobileSearch', 'width=375,height=667');
+            }
+        }
+
+        // Função para iniciar buscas desktop
+        function startDesktopSearch() {
+            if (desktopRunning) return;
+            
+            desktopRunning = true;
+            desktopCount = 0;
+            const intervalSeconds = parseInt(document.getElementById('desktopInterval').value);
+            const shuffledTerms = shuffleArray(desktopSearchTerms);
+            
+            document.getElementById('startDesktop').style.display = 'none';
+            document.getElementById('stopDesktop').style.display = 'inline-block';
+            document.getElementById('startDesktop').classList.add('disabled');
+            
+            // Primeira busca imediatamente
+            performSearch(shuffledTerms[desktopCount], true);
+            desktopCount++;
+            
+            updateDesktopProgress();
+            
+            if (desktopCount < 35) {
+                desktopInterval = setInterval(() => {
+                    if (desktopCount >= 35) {
+                        stopDesktopSearch();
+                        return;
+                    }
+                    
+                    performSearch(shuffledTerms[desktopCount], true);
+                    desktopCount++;
+                    updateDesktopProgress();
+                    
+                    if (desktopCount >= 35) {
+                        document.getElementById('desktopStatus').textContent = '🎉 Todas as 35 buscas desktop concluídas!';
+                        stopDesktopSearch();
+                    }
+                    
+                }, intervalSeconds * 1000);
+            } else {
+                stopDesktopSearch();
+            }
+        }
+
+        function updateDesktopProgress() {
+            const progress = (desktopCount / 35) * 100;
+            document.getElementById('desktopProgress').style.width = progress + '%';
+            
+            if (desktopCount < 35) {
+                const intervalSeconds = parseInt(document.getElementById('desktopInterval').value);
+                document.getElementById('desktopStatus').textContent = 
+                    `✅ Busca ${desktopCount}/35 executada - Próxima em ${intervalSeconds}s`;
+            }
+        }
+
+        // Função para parar buscas desktop
+        function stopDesktopSearch() {
+            if (desktopInterval) {
+                clearInterval(desktopInterval);
+            }
+            desktopRunning = false;
+            document.getElementById('startDesktop').style.display = 'inline-block';
+            document.getElementById('stopDesktop').style.display = 'none';
+            document.getElementById('startDesktop').classList.remove('disabled');
+            
+            if (desktopCount === 35) {
+                document.getElementById('desktopStatus').textContent = '🎉 Todas as 35 buscas desktop concluídas!';
+            } else if (desktopCount === 0) {
+                document.getElementById('desktopStatus').textContent = 'Pronto para iniciar buscas desktop';
+                document.getElementById('desktopSearchInfo').style.display = 'none';
+            } else {
+                document.getElementById('desktopStatus').textContent = `⏸️ Buscas pausadas (${desktopCount}/35 concluídas)`;
+            }
+        }
+
+        // Função para iniciar buscas mobile
+        function startMobileSearch() {
+            if (mobileRunning) return;
+            
+            mobileRunning = true;
+            mobileCount = 0;
+            const intervalSeconds = parseInt(document.getElementById('mobileInterval').value);
+            const shuffledTerms = shuffleArray(mobileSearchTerms);
+            
+            document.getElementById('startMobile').style.display = 'none';
+            document.getElementById('stopMobile').style.display = 'inline-block';
+            document.getElementById('startMobile').classList.add('disabled');
+            
+            // Primeira busca imediatamente
+            performSearch(shuffledTerms[mobileCount], false);
+            mobileCount++;
+            
+            updateMobileProgress();
+            
+            if (mobileCount < 30) {
+                mobileInterval = setInterval(() => {
+                    if (mobileCount >= 30) {
+                        stopMobileSearch();
+                        return;
+                    }
+                    
+                    performSearch(shuffledTerms[mobileCount], false);
+                    mobileCount++;
+                    updateMobileProgress();
+                    
+                    if (mobileCount >= 30) {
+                        document.getElementById('mobileStatus').textContent = '🎉 Todas as 30 buscas mobile concluídas!';
+                        stopMobileSearch();
+                    }
+                    
+                }, intervalSeconds * 1000);
+            } else {
+                stopMobileSearch();
+            }
+        }
+
+        function updateMobileProgress() {
+            const progress = (mobileCount / 30) * 100;
+            document.getElementById('mobileProgress').style.width = progress + '%';
+            
+            if (mobileCount < 30) {
+                const intervalSeconds = parseInt(document.getElementById('mobileInterval').value);
+                document.getElementById('mobileStatus').textContent = 
+                    `✅ Busca ${mobileCount}/30 executada - Próxima em ${intervalSeconds}s`;
+            }
+        }
+
+        // Função para parar buscas mobile
+        function stopMobileSearch() {
+            if (mobileInterval) {
+                clearInterval(mobileInterval);
+            }
+            mobileRunning = false;
+            document.getElementById('startMobile').style.display = 'inline-block';
+            document.getElementById('stopMobile').style.display = 'none';
+            document.getElementById('startMobile').classList.remove('disabled');
+            
+            if (mobileCount === 30) {
+                document.getElementById('mobileStatus').textContent = '🎉 Todas as 30 buscas mobile concluídas!';
+            } else if (mobileCount === 0) {
+                document.getElementById('mobileStatus').textContent = 'Pronto para iniciar buscas mobile';
+                document.getElementById('mobileSearchInfo').style.display = 'none';
+            } else {
+                document.getElementById('mobileStatus').textContent = `⏸️ Buscas pausadas (${mobileCount}/30 concluídas)`;
+            }
+        }
+
+        // Event listeners
+        document.getElementById('startDesktop').addEventListener('click', startDesktopSearch);
+        document.getElementById('stopDesktop').addEventListener('click', stopDesktopSearch);
+        document.getElementById('startMobile').addEventListener('click', startMobileSearch);
+        document.getElementById('stopMobile').addEventListener('click', stopMobileSearch);
+        document.getElementById('openDesktop').addEventListener('click', () => openBing(true));
+        document.getElementById('openMobile').addEventListener('click', () => openBing(false));
+
+        // Prevent page unload during searches
+        window.addEventListener('beforeunload', function(e) {
+            if (desktopRunning || mobileRunning) {
+                e.preventDefault();
+                e.returnValue = 'Buscas em andamento. Tem certeza que deseja sair?';
+            }
+        });
+
+        // Verificar se as janelas foram fechadas
+        setInterval(() => {
+            if (desktopWindow && desktopWindow.closed && desktopRunning) {
+                stopDesktopSearch();
+                document.getElementById('desktopStatus').textContent = '⚠️ Janela desktop foi fechada - buscas interrompidas';
+            }
+            if (mobileWindow && mobileWindow.closed && mobileRunning) {
+                stopMobileSearch();
+                document.getElementById('mobileStatus').textContent = '⚠️ Janela mobile foi fechada - buscas interrompidas';
+            }
+        }, 2000);
+    </script>
+</body>
+</html>
